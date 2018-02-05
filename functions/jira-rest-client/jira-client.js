@@ -8,17 +8,21 @@ let JIRA_REST_SERVER;
 let JIRA_USER;
 let JIRA_PSW;
 let JIRA_CUST_FIELD_LOTE;
+let JIRA_CUST_FIELD_SERIAL;
 
 // configure basic http auth for every request 
 let options;
 let client;
 
-exports.setup = () =>{
+exports.setup = () => {
 
     JIRA_REST_SERVER = functions.config().jira.rest.server;
     JIRA_USER = functions.config().jira.rest.user;
     JIRA_PSW = functions.config().jira.rest.password;
     JIRA_CUST_FIELD_LOTE = functions.config().jira.rest.customfield.lote;
+    JIRA_CUST_FIELD_SERIAL = functions.config().jira.rest.customfield.serial;
+    exports.JIRA_CUST_FIELD_SERIAL = JIRA_CUST_FIELD_SERIAL;
+
     options = {
         user: JIRA_USER,
         password: JIRA_PSW
@@ -99,18 +103,37 @@ exports.findAllOrganizationUsers = (organizationId, response, onError) => {
     ).mergeMap(users => Rx.Observable.from(users.values));
 }
 
-exports.setIssueLote = (issueKey, lote, onSucces, onError) => {
+exports.setIssueLoteAndDeviceIssueLink = (issueKey, lote, deviceIssueLink, onSucces, onError) => {
     // set content-type header and data as json in args parameter 
     const args = {
         data: {
             fields: {
+            },
+            update: {
+                labels: [{
+                    add: lote
+                }],
+                issuelinks: [
+                    {
+                        add: {
+                            type: {
+                                "name": "Relates",
+                                "inward": "relates to",
+                                "outward": "relates to"
+                            },
+                            outwardIssue: {
+                                "key": deviceIssueLink
+                            }
+                        }
+                    }
+                ]
             }
         },
         headers: { "Content-Type": "application/json" }
     };
     args.data.fields[JIRA_CUST_FIELD_LOTE] = lote;
     const url = `${JIRA_REST_SERVER}api/2/issue/${issueKey}`;
-    console.log(`   - JIRA_REST_CLIENT.setIssueLote(${issueKey}): ${url}  args=${JSON.stringify(args)}`);
+    console.log(`   - JIRA_REST_CLIENT.setIssueLoteAndDeviceIssueLink(${issueKey},${lote},${deviceIssueLink}): ${url}  args=${JSON.stringify(args)}`);
     client.put(url, args, (data, response) => {
         response.statusCode === 204 ? onSucces(lote) : onError(`url=${url}  args=${JSON.stringify(args)} response= ${response.statusCode}: ${response.statusMessage}`)
     });

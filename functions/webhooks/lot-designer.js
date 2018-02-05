@@ -25,7 +25,13 @@ exports.designLotNumber = (issueKey, onSuccess, onError) => {
             let orgAbrv = user.organizationName.match(/\((.*?)\)/);
             orgAbrv = orgAbrv ? orgAbrv[1] : "???";
             const lot = `${orgAbrv}-${date.getFullYear().toString().substr(-2)}${("0" + currentWeekNumber()).slice(-2)}-${date.getDay()}`;
-            jiraClient.setIssueLote(issue.key, lot, onSuccess, onError);
+            const issueLinkVal = issue.fields[jiraClient.JIRA_CUST_FIELD_SERIAL].value;
+            jiraClient.setIssueLoteAndDeviceIssueLink(
+                issue.key, 
+                lot,
+                issueLinkVal,
+                onSuccess, 
+                onError);
         },
         (error) => onError(error),
         () => {
