@@ -5,12 +5,12 @@ const lotDesigner = require('./webhooks/lot-designer');
 const app = express();
 
 
-app.get('/ecabbc8b-c05c-48f1-8058-c85d3e0a56ef/:issueKey', (req, res) => {
-    const issueKey = req.params.issueKey;
+app.post('/ecabbc8b-c05c-48f1-8058-c85d3e0a56ef/', (req, res) => {
+    const issue = req.body.issue;    
     // Note: cache should not be re-used by repeated calls to JSON.stringify.
     let cache = [];
     lotDesigner.designLotNumber(
-        issueKey,
+        issue,
         (resp) => res.status(200).send(resp),
         (error) => {
             res.status(500).send(
